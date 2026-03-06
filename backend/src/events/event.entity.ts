@@ -28,6 +28,9 @@ export class Event {
   @Column({ type: 'int' })
   capacity!: number;
 
+  @Column({ type: 'varchar', length: 10, default: 'public' })
+  visibility!: 'public' | 'private';
+
   @ManyToOne(() => User, (user) => user.organizedEvents, { eager: true })
   organizer!: User;
 

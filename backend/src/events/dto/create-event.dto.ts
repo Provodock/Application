@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsDateString,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -30,5 +31,10 @@ export class CreateEventDto {
   @IsInt()
   @Min(1)
   capacity?: number;
+
+  @ApiProperty({ required: false, enum: ['public', 'private'], default: 'public' })
+  @IsOptional()
+  @IsIn(['public', 'private'])
+  visibility?: 'public' | 'private';
 }
 

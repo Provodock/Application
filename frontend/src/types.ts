@@ -5,9 +5,11 @@ export type PublicEvent = {
   date: string;
   location: string;
   capacity: number;
+  visibility: 'public' | 'private';
   organizer?: { id: string; email: string };
   participantsCount: number;
   isFull: boolean;
+  isJoined?: boolean;
 };
 
 export type EventDetails = PublicEvent & {

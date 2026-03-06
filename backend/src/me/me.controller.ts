@@ -5,9 +5,9 @@ import { EventsService } from '../events/events.service';
 
 @ApiTags('Me')
 @ApiBearerAuth()
-@Controller('me')
+@Controller('users/me')
 export class MeController {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(private readonly eventsService: EventsService) { }
 
   @Get('events')
   @UseGuards(JwtAuthGuard)

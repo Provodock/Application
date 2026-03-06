@@ -37,59 +37,57 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
             </button>
-          <nav className="flex items-center gap-2">
-            <NavLink
-              to="/events"
-              className={({ isActive }) =>
-                `rounded-full px-3 py-1 text-sm ${
-                  isActive
+            <nav className="flex items-center gap-2">
+              <NavLink
+                to="/events"
+                end
+                className={({ isActive }) =>
+                  `rounded-full px-3 py-1 text-sm text-center ${isActive
                     ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
                     : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-                }`
-              }
-            >
-              Public events
-            </NavLink>
-            {token ? (
-              <>
-                <NavLink
-                  to="/events/new"
-                  className={({ isActive }) =>
-                    `rounded-full px-3 py-1 text-sm ${
-                      isActive
+                  }`
+                }
+              >
+                Public events
+              </NavLink>
+              {token ? (
+                <>
+                  <NavLink
+                    to="/events/new"
+                    className={({ isActive }) =>
+                      `rounded-full px-3 py-1 text-sm text-center ${isActive
                         ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
                         : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-                    }`
-                  }
-                >
-                  Create
-                </NavLink>
-                <NavLink
-                  to="/me/events"
-                  className={({ isActive }) =>
-                    `rounded-full px-3 py-1 text-sm ${
-                      isActive
+                      }`
+                    }
+                  >
+                    Create
+                  </NavLink>
+                  <NavLink
+                    to="/me/events"
+                    className={({ isActive }) =>
+                      `rounded-full px-3 py-1 text-sm text-center ${isActive
                         ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
                         : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-                    }`
-                  }
-                >
-                  My events
-                </NavLink>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    logout();
-                    navigate('/events');
-                  }}
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <Button onClick={() => navigate('/login')}>Login</Button>
-            )}
-          </nav>
+                      }`
+                    }
+                  >
+                    My events
+                  </NavLink>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      logout();
+                      navigate('/events');
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => navigate('/login')}>Login</Button>
+              )}
+            </nav>
           </div>
         </div>
       </header>

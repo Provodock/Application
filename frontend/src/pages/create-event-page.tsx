@@ -20,6 +20,7 @@ export function CreateEventPage() {
   const [description, setDescription] = useState('Short description…');
   const [location, setLocation] = useState('Online');
   const [capacity, setCapacity] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [date, setDate] = useState(() => {
     const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
     d.setMinutes(0);
@@ -68,6 +69,35 @@ export function CreateEventPage() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Visibility
+            </label>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="public"
+                  checked={visibility === 'public'}
+                  onChange={() => setVisibility('public')}
+                  className="accent-indigo-600"
+                />
+                🌐 Public
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="private"
+                  checked={visibility === 'private'}
+                  onChange={() => setVisibility('private')}
+                  className="accent-indigo-600"
+                />
+                🔒 Private
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 flex items-center gap-2">
@@ -89,9 +119,11 @@ export function CreateEventPage() {
                   description,
                   location,
                   ...(cap !== undefined && { capacity: cap }),
+                  visibility,
                   date: iso,
+                }).then((res) => {
+                  navigate(`/events/${res.data.id}`);
                 });
-                navigate('/events');
               } catch (e: any) {
                 setError(e?.response?.data?.message || 'Create failed');
               } finally {

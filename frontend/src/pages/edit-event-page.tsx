@@ -28,6 +28,7 @@ export function EditEventPage() {
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [date, setDate] = useState('');
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function EditEventPage() {
         setDescription(e.description ?? '');
         setLocation(e.location);
         setCapacity(e.capacity >= UNLIMITED_CAPACITY ? '' : String(e.capacity));
+        setVisibility(e.visibility || 'public');
         setDate(toLocalDateTimeValue(new Date(e.date)));
       })
       .catch((err: any) => {
@@ -88,6 +90,7 @@ export function EditEventPage() {
         description: description || undefined,
         location,
         capacity: cap,
+        visibility,
         date: iso,
       });
       navigate(`/events/${id}`);
@@ -173,6 +176,35 @@ export function EditEventPage() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Visibility
+            </label>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="public"
+                  checked={visibility === 'public'}
+                  onChange={() => setVisibility('public')}
+                  className="accent-indigo-600"
+                />
+                🌐 Public
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="private"
+                  checked={visibility === 'private'}
+                  onChange={() => setVisibility('private')}
+                  className="accent-indigo-600"
+                />
+                🔒 Private
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 flex items-center gap-2">

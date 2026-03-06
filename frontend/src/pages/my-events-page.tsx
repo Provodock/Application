@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
 import { Button } from '../components/ui/button';
 import { MyEvent } from '../types';
+import { getDateLocale } from '../utils/locale';
 
 type View = 'month' | 'week';
 
@@ -14,7 +15,7 @@ function formatDayKey(iso: string) {
 }
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(iso).toLocaleTimeString(getDateLocale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 export function MyEventsPage() {
@@ -28,7 +29,7 @@ export function MyEventsPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await api.get<MyEvent[]>('/me/events', { params: { view } });
+      const res = await api.get<MyEvent[]>('/users/me/events', { params: { view } });
       setItems(res.data);
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Failed to load my events');
@@ -70,7 +71,13 @@ export function MyEventsPage() {
     return weeks;
   }, [currentDate, view]);
 
-  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const weekDays = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) =>
+        new Date(2024, 0, 1 + i).toLocaleDateString(getDateLocale(), { weekday: 'short' }),
+      ),
+    [],
+  );
 
   const currentWeek = useMemo(() => {
     if (view !== 'week') return [];
@@ -86,13 +93,15 @@ export function MyEventsPage() {
   }, [currentDate, view]);
 
   const title = useMemo(() => {
-    const month = currentDate.toLocaleString(undefined, { month: 'long' });
+    const month = currentDate.toLocaleString(getDateLocale(), { month: 'long' });
     const year = currentDate.getFullYear();
     if (view === 'month') return `${month} ${year}`;
     const weekStart = currentWeek[0];
     const weekEnd = currentWeek[6];
     if (!weekStart || !weekEnd) return `${month} ${year}`;
-    return `${weekStart.toLocaleDateString()} – ${weekEnd.toLocaleDateString()}`;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const fmt = (d: Date) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+    return `${fmt(weekStart)} – ${fmt(weekEnd)}`;
   }, [currentDate, currentWeek, view]);
 
   function goPrev() {
@@ -122,35 +131,39 @@ export function MyEventsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">My events</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Calendar view of events where you are organizer or participant.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button variant="secondary" onClick={goPrev}>
             ‹
           </Button>
-          <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 min-w-[180px] text-center">
+          <div className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 min-w-[100px] sm:min-w-[180px] text-center">
             {title}
           </div>
           <Button variant="secondary" onClick={goNext}>
             ›
           </Button>
-          <Button
-            variant={view === 'month' ? 'primary' : 'secondary'}
-            onClick={() => setView('month')}
-          >
-            Month
-          </Button>
-          <Button
-            variant={view === 'week' ? 'primary' : 'secondary'}
-            onClick={() => setView('week')}
-          >
-            Week
-          </Button>
+          <span className="hidden sm:inline w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1" />
+          <div className="basis-full sm:basis-auto" />
+          <div className="flex items-center gap-3">
+            <Button
+              variant={view === 'month' ? 'primary' : 'secondary'}
+              onClick={() => setView('month')}
+            >
+              Month
+            </Button>
+            <Button
+              variant={view === 'week' ? 'primary' : 'secondary'}
+              onClick={() => setView('week')}
+            >
+              Week
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -160,119 +173,216 @@ export function MyEventsPage() {
         </div>
       ) : null}
 
-      {/* Month view: grid 6x7 */}
+      {/* Month view */}
       {view === 'month' && (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
-          <div className="grid grid-cols-7 overflow-hidden rounded-t-xl text-sm">
-            {weekDays.map((d) => (
-              <div
-                key={d}
-                className="flex min-h-[44px] min-w-0 items-center justify-center border border-slate-200 bg-slate-100 px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-300"
-              >
-                {d}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 overflow-hidden rounded-b-xl text-sm">
-            {monthMatrix.map((week, wi) =>
-              week.map((day, di) => {
-                const dayEvents = eventsForDay(day);
-                const isToday =
-                  formatDayKey(day.toISOString()) === formatDayKey(new Date().toISOString());
-                const inCurrentMonth = day.getMonth() === currentDate.getMonth();
-                return (
-                  <div
-                    key={`${wi}-${di}`}
-                    className={`flex min-h-[112px] min-w-0 flex-col border border-slate-200 p-2 dark:border-slate-500 ${
-                      inCurrentMonth
+          {/* Desktop: grid calendar */}
+          <div className="hidden md:block">
+            <div className="grid grid-cols-7 overflow-hidden rounded-t-xl text-sm">
+              {weekDays.map((d) => (
+                <div
+                  key={d}
+                  className="flex min-h-[44px] min-w-0 items-center justify-center border border-slate-200 bg-slate-100 px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-300"
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 overflow-hidden rounded-b-xl text-sm">
+              {monthMatrix.map((week, wi) =>
+                week.map((day, di) => {
+                  const dayEvents = eventsForDay(day);
+                  const isToday =
+                    formatDayKey(day.toISOString()) === formatDayKey(new Date().toISOString());
+                  const inCurrentMonth = day.getMonth() === currentDate.getMonth();
+                  return (
+                    <div
+                      key={`${wi}-${di}`}
+                      className={`flex min-h-[112px] min-w-0 flex-col border border-slate-200 p-2 dark:border-slate-500 ${inCurrentMonth
                         ? 'bg-indigo-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200'
                         : 'bg-white text-slate-400 dark:bg-slate-900 dark:text-slate-500'
-                    }`}
-                  >
-                    <div className="mb-1 flex items-center justify-between">
-                      <div
-                        className={`h-6 w-6 rounded-full text-center text-xs font-semibold leading-6 ${
-                          isToday
+                        }`}
+                    >
+                      <div className="mb-1 flex items-center justify-between">
+                        <div
+                          className={`h-6 w-6 rounded-full text-center text-xs font-semibold leading-6 ${isToday
                             ? 'bg-indigo-600 text-white ring-2 ring-indigo-200 ring-offset-2 dark:ring-indigo-400/80 dark:ring-offset-slate-800'
                             : 'text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        {day.getDate()}
+                            }`}
+                        >
+                          {day.getDate()}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        {dayEvents.map((ev) => (
+                          <Link
+                            key={ev.id}
+                            to={`/events/${ev.id}`}
+                            className="block rounded-md bg-indigo-50 px-2 py-1 text-[11px] text-indigo-900 transition hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-200 dark:hover:bg-indigo-900/60"
+                          >
+                            <div className="font-semibold truncate">{ev.title}</div>
+                            <div className="text-[10px] text-slate-600 dark:text-slate-400">
+                              {formatTime(ev.date)} · {ev.location}
+                            </div>
+                          </Link>
+                        ))}
                       </div>
                     </div>
-                    <div className="space-y-1">
+                  );
+                }),
+              )}
+            </div>
+          </div>
+
+          {/* Mobile: vertical day list */}
+          <div className="block md:hidden space-y-2">
+            {monthMatrix.flat().filter((day) => day.getMonth() === currentDate.getMonth()).map((day, idx) => {
+              const dayEvents = eventsForDay(day);
+              const isToday =
+                formatDayKey(day.toISOString()) === formatDayKey(new Date().toISOString());
+              return (
+                <div key={idx}>
+                  <div className="flex items-center gap-2 py-1.5">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${isToday
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                        }`}
+                    >
+                      {day.getDate()}
+                    </div>
+                    <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                      {day.toLocaleDateString(getDateLocale(), { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </div>
+                  </div>
+                  {dayEvents.length > 0 ? (
+                    <div className="ml-10 space-y-1.5 pb-2">
                       {dayEvents.map((ev) => (
                         <Link
                           key={ev.id}
                           to={`/events/${ev.id}`}
-                          className="block rounded-md bg-indigo-50 px-2 py-1 text-[11px] text-indigo-900 transition hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-200 dark:hover:bg-indigo-900/60"
+                          className="block rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-sm transition hover:border-indigo-300 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600"
                         >
-                          <div className="font-semibold truncate">{ev.title}</div>
-                          <div className="text-[10px] text-slate-600 dark:text-slate-400">
-                            {formatTime(ev.date)} · {ev.location}
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">{ev.title}</div>
+                            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">{ev.role}</div>
+                          </div>
+                          <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            {formatTime(ev.date)} · {ev.location} · {ev.participantsCount} participants · {ev.isFull ? 'Full' : 'Open'}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="ml-10 pb-1 text-xs text-slate-400 dark:text-slate-500">—</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Week view */}
+      {view === 'week' && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
+          {/* Desktop: 7-column grid */}
+          <div className="hidden md:block">
+            <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-slate-200 text-sm dark:border-slate-500">
+              {currentWeek.map((day, idx) => {
+                const dayEvents = eventsForDay(day);
+                const isToday =
+                  formatDayKey(day.toISOString()) === formatDayKey(new Date().toISOString());
+                return (
+                  <div key={idx} className="flex min-w-0 flex-col border border-slate-200 dark:border-slate-500">
+                    <div className="flex min-h-[56px] flex-col justify-center border-b border-slate-200 bg-slate-100 px-2 py-3 dark:border-slate-500 dark:bg-slate-700">
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                        {weekDays[idx]}
+                      </div>
+                      <div
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${isToday
+                          ? 'bg-indigo-600 text-white ring-2 ring-indigo-200 ring-offset-2 dark:ring-indigo-400/80 dark:ring-offset-slate-700'
+                          : 'text-slate-700 dark:text-slate-300'
+                          }`}
+                      >
+                        {day.getDate()}
+                      </div>
+                    </div>
+                    <div className="min-h-[120px] space-y-2 p-2">
+                      {dayEvents.map((ev) => (
+                        <Link
+                          key={ev.id}
+                          to={`/events/${ev.id}`}
+                          className="block rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] transition hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600 dark:hover:bg-indigo-900/20"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="font-semibold text-slate-900 dark:text-slate-100">
+                                {ev.title}
+                              </div>
+                              <div className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-400">
+                                {formatTime(ev.date)} · {ev.location}
+                              </div>
+                            </div>
+                            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                              {ev.role}
+                            </div>
+                          </div>
+                          <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-400">
+                            {ev.participantsCount} participants ·{' '}
+                            {ev.isFull ? 'Full' : 'Open'}
                           </div>
                         </Link>
                       ))}
                     </div>
                   </div>
                 );
-              }),
-            )}
+              })}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Week view: 1x7 with time+title */}
-      {view === 'week' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
-          <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-slate-200 text-sm dark:border-slate-500">
+          {/* Mobile: vertical stack */}
+          <div className="block md:hidden space-y-2">
             {currentWeek.map((day, idx) => {
               const dayEvents = eventsForDay(day);
               const isToday =
                 formatDayKey(day.toISOString()) === formatDayKey(new Date().toISOString());
               return (
-                <div key={idx} className="flex min-w-0 flex-col border border-slate-200 dark:border-slate-500">
-                  <div className="flex min-h-[56px] flex-col justify-center border-b border-slate-200 bg-slate-100 px-2 py-3 dark:border-slate-500 dark:bg-slate-700">
-                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      {weekDays[idx]}
-                    </div>
+                <div key={idx}>
+                  <div className="flex items-center gap-2 py-1.5">
                     <div
-                      className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                        isToday
-                          ? 'bg-indigo-600 text-white ring-2 ring-indigo-200 ring-offset-2 dark:ring-indigo-400/80 dark:ring-offset-slate-700'
-                          : 'text-slate-700 dark:text-slate-300'
-                      }`}
+                      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${isToday
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                        }`}
                     >
                       {day.getDate()}
                     </div>
+                    <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                      {day.toLocaleDateString(getDateLocale(), { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </div>
                   </div>
-                  <div className="min-h-[120px] space-y-2 p-2">
-                    {dayEvents.map((ev) => (
-                      <Link
-                        key={ev.id}
-                        to={`/events/${ev.id}`}
-                        className="block rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] transition hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600 dark:hover:bg-indigo-900/20"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-semibold text-slate-900 dark:text-slate-100">
-                              {ev.title}
-                            </div>
-                            <div className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-400">
-                              {formatTime(ev.date)} · {ev.location}
-                            </div>
+                  {dayEvents.length > 0 ? (
+                    <div className="ml-10 space-y-1.5 pb-2">
+                      {dayEvents.map((ev) => (
+                        <Link
+                          key={ev.id}
+                          to={`/events/${ev.id}`}
+                          className="block rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-sm transition hover:border-indigo-300 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">{ev.title}</div>
+                            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">{ev.role}</div>
                           </div>
-                          <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                            {ev.role}
+                          <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            {formatTime(ev.date)} · {ev.location} · {ev.participantsCount} participants · {ev.isFull ? 'Full' : 'Open'}
                           </div>
-                        </div>
-                        <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-400">
-                          {ev.participantsCount} participants ·{' '}
-                          {ev.isFull ? 'Full' : 'Open'}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="ml-10 pb-1 text-xs text-slate-400 dark:text-slate-500">—</div>
+                  )}
                 </div>
               );
             })}

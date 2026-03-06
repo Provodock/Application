@@ -15,6 +15,7 @@ import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { UsersService } from '../users/users.service';
 
 @ApiTags('Events')
@@ -23,14 +24,17 @@ export class EventsController {
   constructor(
     private readonly eventsService: EventsService,
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   @Get()
-  getAll() {
-    return this.eventsService.findAll();
+  @UseGuards(OptionalJwtAuthGuard)
+  getAll(@Req() req: any) {
+    const userId = req.user?.userId;
+    return this.eventsService.findAll(userId);
   }
 
   @Get(':id')
+  @UseGuards(OptionalJwtAuthGuard)
   getOne(@Param('id') id: string, @Req() req: any) {
     const userId = req.user?.userId;
     return this.eventsService.findOne(id, userId);
@@ -85,13 +89,6 @@ export class EventsController {
       throw new UnauthorizedException();
     }
     return this.eventsService.leave(id, user);
-  }
-
-  @Get('/me/list')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  getMyEvents(@Req() req: any) {
-    return this.eventsService.findForUser(req.user.userId);
   }
 }
 

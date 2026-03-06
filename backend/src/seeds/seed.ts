@@ -8,7 +8,6 @@ async function run() {
   const userRepo = AppDataSource.getRepository(User);
   const eventRepo = AppDataSource.getRepository(Event);
 
-  // Clean tables (including join table) before inserting fresh data
   await AppDataSource.query(
     'TRUNCATE TABLE "event_participants", "events", "users" RESTART IDENTITY CASCADE;',
   );

@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { ConfirmModal } from '../components/confirm-modal';
 import { EventDetails } from '../types';
 import { useAuthStore } from '../stores/auth-store';
+import { getDateLocale } from '../utils/locale';
 
 function getInitials(email: string) {
   const part = email.split('@')[0] || '';
@@ -14,7 +15,7 @@ function getInitials(email: string) {
 
 function formatDate(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleString();
+  return d.toLocaleString(getDateLocale(), { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 export function EventDetailsPage() {
@@ -119,15 +120,21 @@ export function EventDetailsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-lg font-extrabold text-slate-900 dark:text-slate-100">{item.title}</div>
+              <div className="flex items-center gap-2">
+                <div className="text-lg font-extrabold text-slate-900 dark:text-slate-100">{item.title}</div>
+                {item.visibility === 'private' && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-200">
+                    🔒 Private
+                  </span>
+                )}
+              </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.description || '—'}</div>
             </div>
             <div
-              className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                item.isFull
+              className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${item.isFull
                   ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200'
                   : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
-              }`}
+                }`}
             >
               {item.isFull ? 'Full' : 'Open'}
             </div>
@@ -170,10 +177,14 @@ export function EventDetailsPage() {
 
           <div className="mt-5 flex flex-wrap items-center gap-2">
             {!token ? (
-              <div className="text-sm text-slate-500 dark:text-slate-400">Log in to join.</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                {item.visibility === 'private'
+                  ? 'This event is private. Log in to join.'
+                  : 'Log in to join.'}
+              </div>
             ) : item.isJoined ? (
               <Button variant="secondary" onClick={leave} disabled={busy}>
-                Leave
+                Leave event
               </Button>
             ) : (
               <Button onClick={join} disabled={busy || item.isFull}>

@@ -4,25 +4,65 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { Event } from './event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { User } from '../users/user.entity';
 
+const PAST_EVENTS_CLEANUP_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+
 @Injectable()
-export class EventsService {
+export class EventsService implements OnModuleInit {
   constructor(
     @InjectRepository(Event)
     private readonly eventsRepository: Repository<Event>,
-  ) {}
+  ) { }
 
-  async findAll() {
-    const events = await this.eventsRepository.find({
-      order: { date: 'ASC' },
+  onModuleInit() {
+    this.removePastEvents().catch(() => { });
+    setInterval(() => this.removePastEvents().catch(() => { }), PAST_EVENTS_CLEANUP_INTERVAL_MS);
+  }
+
+  async removePastEvents(): Promise<number> {
+    const now = new Date();
+    const past = await this.eventsRepository.find({
+      where: { date: LessThan(now) as any },
     });
-    return events.map((event) => this.toPublicEvent(event));
+    if (past.length > 0) {
+      await this.eventsRepository.remove(past);
+    }
+    return past.length;
+  }
+
+  async findAll(currentUserId?: string) {
+    const now = new Date();
+    const qb = this.eventsRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.participants', 'participant')
+      .leftJoinAndSelect('event.organizer', 'organizer')
+      .where('event.date >= :now', { now });
+
+    if (currentUserId) {
+      qb.andWhere(
+        '(event.visibility = :pub OR (event.visibility = :priv AND organizer.id = :uid))',
+        { pub: 'public', priv: 'private', uid: currentUserId },
+      );
+    } else {
+      qb.andWhere('event.visibility = :pub', { pub: 'public' });
+    }
+
+    const events = await qb.orderBy('event.date', 'ASC').getMany();
+    return events.map((event) => {
+      const base = this.toPublicEvent(event);
+      if (currentUserId) {
+        const isJoined = (event.participants || []).some((p) => p.id === currentUserId);
+        return { ...base, isJoined };
+      }
+      return base;
+    });
   }
 
   async findOne(id: string, currentUserId?: string) {
@@ -52,10 +92,12 @@ export class EventsService {
       throw new BadRequestException('Event date must be in the future');
     }
     const capacity = dto.capacity != null && dto.capacity > 0 ? dto.capacity : 999999;
+    const visibility = dto.visibility || 'public';
     const event = this.eventsRepository.create({
       ...dto,
       date: eventDate,
       capacity,
+      visibility,
       organizer,
       participants: [],
     });
@@ -84,7 +126,16 @@ export class EventsService {
     if (dto.title !== undefined) event.title = dto.title;
     if (dto.description !== undefined) event.description = dto.description;
     if (dto.location !== undefined) event.location = dto.location;
-    if (dto.capacity !== undefined) event.capacity = dto.capacity;
+    if (dto.capacity !== undefined) {
+      const currentParticipants = event.participants?.length || 0;
+      if (dto.capacity < currentParticipants) {
+        throw new BadRequestException(
+          `Cannot set capacity to ${dto.capacity}: there are already ${currentParticipants} participants`,
+        );
+      }
+      event.capacity = dto.capacity;
+    }
+    if (dto.visibility !== undefined) event.visibility = dto.visibility;
 
     const saved = await this.eventsRepository.save(event);
     return this.toPublicEvent(saved);
@@ -139,12 +190,15 @@ export class EventsService {
   }
 
   async findForUser(userId: string) {
+    const now = new Date();
     const events = await this.eventsRepository
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.organizer', 'organizer')
       .leftJoinAndSelect('event.participants', 'participant')
-      .where('organizer.id = :userId', { userId })
-      .orWhere('participant.id = :userId', { userId })
+      .where('event.date >= :now AND (organizer.id = :userId OR participant.id = :userId)', {
+        now,
+        userId,
+      })
       .orderBy('event.date', 'ASC')
       .getMany();
 
@@ -177,6 +231,7 @@ export class EventsService {
       date: event.date,
       location: event.location,
       capacity: event.capacity,
+      visibility: event.visibility || 'public',
       organizer: event.organizer
         ? { id: event.organizer.id, email: event.organizer.email }
         : undefined,
