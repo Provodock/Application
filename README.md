@@ -12,7 +12,7 @@
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/event_manager.git
+git clone https://github.com/Provodock/Application.git
 cd event_manager
 ```
 
