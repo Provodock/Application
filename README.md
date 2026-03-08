@@ -13,7 +13,7 @@
 
 ```bash
 git clone https://github.com/Provodock/Application.git
-cd event_manager
+cd Application
 ```
 
 ## 2. Configure Environment (Optional)
