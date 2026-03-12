@@ -12,8 +12,8 @@
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/event_manager.git
-cd event_manager
+git clone https://github.com/Provodock/Application.git
+cd Application
 ```
 
 ## 2. Configure Environment (Optional)
