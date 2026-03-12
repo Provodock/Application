@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
 import { api } from '../utils/api';
 import { Button } from '../components/ui/button';
 import { ConfirmModal } from '../components/confirm-modal';
@@ -129,6 +130,20 @@ export function EventDetailsPage() {
                 )}
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.description || '—'}</div>
+              {item.tags && item.tags.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {item.tags.map((t) => (
+                    <Link key={t.id} to={`/events?tag=${t.id}`} className={clsx("flex items-center gap-1.5 rounded-md bg-indigo-50 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50", t.imageUrl ? "pl-1 pr-2" : "px-2")}>
+                      {t.imageUrl ? (
+                        <img src={t.imageUrl} alt="" className="h-[18px] w-[18px] rounded object-cover shrink-0 bg-white" />
+                      ) : (
+                        <span className="font-bold opacity-50">#</span>
+                      )}
+                      <span>{t.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
             <div
               className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${item.isFull

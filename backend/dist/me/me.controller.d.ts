@@ -10,5 +10,9 @@ export declare class MeController {
         role: string;
         participantsCount: number;
         isFull: boolean;
+        tags: {
+            id: string;
+            name: string;
+        }[];
     }[]>;
 }

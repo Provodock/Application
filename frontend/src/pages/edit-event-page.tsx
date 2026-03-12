@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { TagMultiSelect, TagType } from '../components/ui/tag-multi-select';
 import { api } from '../utils/api';
 import { EventDetails } from '../types';
 import { useAuthStore } from '../stores/auth-store';
@@ -29,6 +30,7 @@ export function EditEventPage() {
   const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+  const [tags, setTags] = useState<TagType[]>([]);
   const [date, setDate] = useState('');
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export function EditEventPage() {
         setLocation(e.location);
         setCapacity(e.capacity >= UNLIMITED_CAPACITY ? '' : String(e.capacity));
         setVisibility(e.visibility || 'public');
+        setTags(e.tags || []);
         setDate(toLocalDateTimeValue(new Date(e.date)));
       })
       .catch((err: any) => {
@@ -92,6 +95,7 @@ export function EditEventPage() {
         capacity: cap,
         visibility,
         date: iso,
+        tagIds: tags.map((t) => t.id),
       });
       navigate(`/events/${id}`);
     } catch (e: any) {
@@ -169,6 +173,13 @@ export function EditEventPage() {
             min={1}
             value={capacity}
             onChange={(e) => setCapacity(e.target.value)}
+          />
+          <TagMultiSelect
+            label="Tags"
+            value={tags}
+            onChange={setTags}
+            maxTags={5}
+            isCollapsible={true}
           />
           <Input
             label="Date & time"

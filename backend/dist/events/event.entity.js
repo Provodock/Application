@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Event = void 0;
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("../users/user.entity");
+const tag_entity_1 = require("../tags/tag.entity");
 let Event = class Event {
 };
 exports.Event = Event;
@@ -40,6 +41,10 @@ __decorate([
     __metadata("design:type", Number)
 ], Event.prototype, "capacity", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 10, default: 'public' }),
+    __metadata("design:type", String)
+], Event.prototype, "visibility", void 0);
+__decorate([
     (0, typeorm_1.ManyToOne)(() => user_entity_1.User, (user) => user.organizedEvents, { eager: true }),
     __metadata("design:type", user_entity_1.User)
 ], Event.prototype, "organizer", void 0);
@@ -52,6 +57,15 @@ __decorate([
     }),
     __metadata("design:type", Array)
 ], Event.prototype, "participants", void 0);
+__decorate([
+    (0, typeorm_1.ManyToMany)(() => tag_entity_1.Tag, { eager: true }),
+    (0, typeorm_1.JoinTable)({
+        name: 'event_tags',
+        joinColumn: { name: 'event_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
+    }),
+    __metadata("design:type", Array)
+], Event.prototype, "tags", void 0);
 exports.Event = Event = __decorate([
     (0, typeorm_1.Entity)('events')
 ], Event);

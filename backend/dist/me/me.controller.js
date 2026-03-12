@@ -40,7 +40,7 @@ __decorate([
 exports.MeController = MeController = __decorate([
     (0, swagger_1.ApiTags)('Me'),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.Controller)('me'),
+    (0, common_1.Controller)('users/me'),
     __metadata("design:paramtypes", [events_service_1.EventsService])
 ], MeController);
 //# sourceMappingURL=me.controller.js.map

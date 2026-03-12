@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { TagMultiSelect } from '../components/ui/tag-multi-select';
 import { api } from '../utils/api';
 
 function toLocalDateTimeValue(d: Date) {
@@ -21,6 +22,7 @@ export function CreateEventPage() {
   const [location, setLocation] = useState('Online');
   const [capacity, setCapacity] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+  const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
   const [date, setDate] = useState(() => {
     const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
     d.setMinutes(0);
@@ -62,6 +64,13 @@ export function CreateEventPage() {
             placeholder="Unlimited"
             value={capacity}
             onChange={(e) => setCapacity(e.target.value)}
+          />
+          <TagMultiSelect
+            label="Tags"
+            value={tags}
+            onChange={setTags}
+            maxTags={5}
+            isCollapsible={true}
           />
           <Input
             label="Date"
@@ -121,6 +130,7 @@ export function CreateEventPage() {
                   ...(cap !== undefined && { capacity: cap }),
                   visibility,
                   date: iso,
+                  tagIds: tags.map((t) => t.id),
                 }).then((res) => {
                   navigate(`/events/${res.data.id}`);
                 });

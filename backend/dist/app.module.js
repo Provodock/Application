@@ -14,8 +14,10 @@ const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
 const events_module_1 = require("./events/events.module");
 const me_module_1 = require("./me/me.module");
+const tags_module_1 = require("./tags/tags.module");
 const user_entity_1 = require("./users/user.entity");
 const event_entity_1 = require("./events/event.entity");
+const tag_entity_1 = require("./tags/tag.entity");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -32,7 +34,7 @@ exports.AppModule = AppModule = __decorate([
                 username: process.env.DB_USER || 'postgres',
                 password: process.env.DB_PASSWORD || 'postgres',
                 database: process.env.DB_NAME || 'event_manager',
-                entities: [user_entity_1.User, event_entity_1.Event],
+                entities: [user_entity_1.User, event_entity_1.Event, tag_entity_1.Tag],
                 synchronize: true,
                 logging: false,
             }),
@@ -40,6 +42,7 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             events_module_1.EventsModule,
             me_module_1.MeModule,
+            tags_module_1.TagsModule,
         ],
     })
 ], AppModule);

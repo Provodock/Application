@@ -13,12 +13,14 @@ const event_entity_1 = require("./event.entity");
 const events_service_1 = require("./events.service");
 const events_controller_1 = require("./events.controller");
 const users_module_1 = require("../users/users.module");
+const auth_module_1 = require("../auth/auth.module");
+const tags_module_1 = require("../tags/tags.module");
 let EventsModule = class EventsModule {
 };
 exports.EventsModule = EventsModule;
 exports.EventsModule = EventsModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([event_entity_1.Event]), users_module_1.UsersModule],
+        imports: [typeorm_1.TypeOrmModule.forFeature([event_entity_1.Event]), users_module_1.UsersModule, auth_module_1.AuthModule, tags_module_1.TagsModule],
         providers: [events_service_1.EventsService],
         controllers: [events_controller_1.EventsController],
         exports: [events_service_1.EventsService],

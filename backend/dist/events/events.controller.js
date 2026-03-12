@@ -19,14 +19,18 @@ const events_service_1 = require("./events.service");
 const create_event_dto_1 = require("./dto/create-event.dto");
 const update_event_dto_1 = require("./dto/update-event.dto");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const optional_jwt_auth_guard_1 = require("../auth/optional-jwt-auth.guard");
 const users_service_1 = require("../users/users.service");
 let EventsController = class EventsController {
     constructor(eventsService, usersService) {
         this.eventsService = eventsService;
         this.usersService = usersService;
     }
-    getAll() {
-        return this.eventsService.findAll();
+    getAll(req, tags) {
+        var _a;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const tagIds = tags ? tags.split(',').filter(Boolean) : undefined;
+        return this.eventsService.findAll(userId, tagIds);
     }
     getOne(id, req) {
         var _a;
@@ -60,19 +64,20 @@ let EventsController = class EventsController {
         }
         return this.eventsService.leave(id, user);
     }
-    getMyEvents(req) {
-        return this.eventsService.findForUser(req.user.userId);
-    }
 };
 exports.EventsController = EventsController;
 __decorate([
     (0, common_1.Get)(),
+    (0, common_1.UseGuards)(optional_jwt_auth_guard_1.OptionalJwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('tags')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], EventsController.prototype, "getAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, common_1.UseGuards)(optional_jwt_auth_guard_1.OptionalJwtAuthGuard),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -130,15 +135,6 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], EventsController.prototype, "leave", null);
-__decorate([
-    (0, common_1.Get)('/me/list'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], EventsController.prototype, "getMyEvents", null);
 exports.EventsController = EventsController = __decorate([
     (0, swagger_1.ApiTags)('Events'),
     (0, common_1.Controller)('events'),

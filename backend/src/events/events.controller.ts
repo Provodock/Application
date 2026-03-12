@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Query,
   UnauthorizedException,
   Param,
   Patch,
@@ -28,9 +29,10 @@ export class EventsController {
 
   @Get()
   @UseGuards(OptionalJwtAuthGuard)
-  getAll(@Req() req: any) {
+  getAll(@Req() req: any, @Query('tags') tags?: string) {
     const userId = req.user?.userId;
-    return this.eventsService.findAll(userId);
+    const tagIds = tags ? tags.split(',').filter(Boolean) : undefined;
+    return this.eventsService.findAll(userId, tagIds);
   }
 
   @Get(':id')

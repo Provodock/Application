@@ -1,10 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsDateString,
   IsIn,
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Min,
 } from 'class-validator';
 
@@ -36,5 +39,12 @@ export class CreateEventDto {
   @IsOptional()
   @IsIn(['public', 'private'])
   visibility?: 'public' | 'private';
+
+  @ApiProperty({ required: false, description: 'Array of tag IDs, max 5', type: [String] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(5)
+  @IsUUID('4', { each: true })
+  tagIds?: string[];
 }
 

@@ -18,6 +18,16 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString(getDateLocale(), { hour: '2-digit', minute: '2-digit' });
 }
 
+function getTagColor(tagName: string | undefined, isDark: boolean = false) {
+  if (!tagName) return undefined;
+  let hash = 0;
+  for (let i = 0; i < tagName.length; i++) {
+    hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return isDark ? `hsl(${hue}, 60%, 30%)` : `hsl(${hue}, 70%, 85%)`;
+}
+
 export function MyEventsPage() {
   const [view, setView] = useState<View>('month');
   const [currentDate, setCurrentDate] = useState(() => new Date());
@@ -182,7 +192,7 @@ export function MyEventsPage() {
               {weekDays.map((d) => (
                 <div
                   key={d}
-                  className="flex min-h-[44px] min-w-0 items-center justify-center border border-slate-200 bg-slate-100 px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-300"
+                  className="flex min-h-[44px] min-w-0 items-center justify-center border border-slate-200 bg-slate-50 px-2 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                 >
                   {d}
                 </div>
@@ -198,9 +208,9 @@ export function MyEventsPage() {
                   return (
                     <div
                       key={`${wi}-${di}`}
-                      className={`flex min-h-[112px] min-w-0 flex-col border border-slate-200 p-2 dark:border-slate-500 ${inCurrentMonth
-                        ? 'bg-indigo-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200'
-                        : 'bg-white text-slate-400 dark:bg-slate-900 dark:text-slate-500'
+                      className={`flex min-h-[112px] min-w-0 flex-col border border-slate-200 p-2 dark:border-slate-700 ${inCurrentMonth
+                        ? 'bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200'
+                        : 'bg-slate-50 text-slate-400 dark:bg-slate-950/50 dark:text-slate-500'
                         }`}
                     >
                       <div className="mb-1 flex items-center justify-between">
@@ -214,18 +224,30 @@ export function MyEventsPage() {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        {dayEvents.map((ev) => (
-                          <Link
-                            key={ev.id}
-                            to={`/events/${ev.id}`}
-                            className="block rounded-md bg-indigo-50 px-2 py-1 text-[11px] text-indigo-900 transition hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-200 dark:hover:bg-indigo-900/60"
-                          >
-                            <div className="font-semibold truncate">{ev.title}</div>
-                            <div className="text-[10px] text-slate-600 dark:text-slate-400">
-                              {formatTime(ev.date)} · {ev.location}
-                            </div>
-                          </Link>
-                        ))}
+                        {dayEvents.map((ev) => {
+                          const firstTag = ev.tags?.[0]?.name;
+                          return (
+                            <Link
+                              key={ev.id}
+                              to={`/events/${ev.id}`}
+                              className="block rounded-md bg-indigo-50 px-2 py-1 text-[11px] text-indigo-900 transition hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-200 dark:hover:bg-indigo-900/60"
+                            >
+                              <div className="font-semibold flex items-center gap-1 overflow-hidden">
+                                {firstTag && (
+                                  <span
+                                    title={firstTag}
+                                    className="shrink-0 block h-2 w-2 rounded-full"
+                                    style={{ backgroundColor: getTagColor(firstTag, false) }}
+                                  />
+                                )}
+                                <span className="truncate">{ev.title}</span>
+                              </div>
+                              <div className="text-[10px] text-slate-600 dark:text-slate-400 truncate">
+                                {formatTime(ev.date)} · {ev.location}
+                              </div>
+                            </Link>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -257,21 +279,33 @@ export function MyEventsPage() {
                   </div>
                   {dayEvents.length > 0 ? (
                     <div className="ml-10 space-y-1.5 pb-2">
-                      {dayEvents.map((ev) => (
-                        <Link
-                          key={ev.id}
-                          to={`/events/${ev.id}`}
-                          className="block rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-sm transition hover:border-indigo-300 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">{ev.title}</div>
-                            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">{ev.role}</div>
-                          </div>
-                          <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            {formatTime(ev.date)} · {ev.location} · {ev.participantsCount} participants · {ev.isFull ? 'Full' : 'Open'}
-                          </div>
-                        </Link>
-                      ))}
+                      {dayEvents.map((ev) => {
+                        const firstTag = ev.tags?.[0]?.name;
+                        return (
+                          <Link
+                            key={ev.id}
+                            to={`/events/${ev.id}`}
+                            className="block rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-sm transition hover:border-indigo-300 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1 overflow-hidden">
+                                {firstTag && (
+                                  <span
+                                    title={firstTag}
+                                    className="shrink-0 block h-2 w-2 rounded-full"
+                                    style={{ backgroundColor: getTagColor(firstTag, false) }}
+                                  />
+                                )}
+                                <span className="truncate">{ev.title}</span>
+                              </div>
+                              <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">{ev.role}</div>
+                            </div>
+                            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                              {formatTime(ev.date)} · {ev.location} · {ev.participantsCount} participants · {ev.isFull ? 'Full' : 'Open'}
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="ml-10 pb-1 text-xs text-slate-400 dark:text-slate-500">—</div>
@@ -288,15 +322,15 @@ export function MyEventsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
           {/* Desktop: 7-column grid */}
           <div className="hidden md:block">
-            <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-slate-200 text-sm dark:border-slate-500">
+            <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-slate-200 text-sm dark:border-slate-700">
               {currentWeek.map((day, idx) => {
                 const dayEvents = eventsForDay(day);
                 const isToday =
                   formatDayKey(day.toISOString()) === formatDayKey(new Date().toISOString());
                 return (
-                  <div key={idx} className="flex min-w-0 flex-col border border-slate-200 dark:border-slate-500">
-                    <div className="flex min-h-[56px] flex-col justify-center border-b border-slate-200 bg-slate-100 px-2 py-3 dark:border-slate-500 dark:bg-slate-700">
-                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                  <div key={idx} className="flex min-w-0 flex-col border border-slate-200 dark:border-slate-700">
+                    <div className="flex min-h-[56px] flex-col justify-center border-b border-slate-200 bg-slate-50 px-2 py-3 dark:border-slate-700 dark:bg-slate-800">
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         {weekDays[idx]}
                       </div>
                       <div
@@ -309,31 +343,40 @@ export function MyEventsPage() {
                       </div>
                     </div>
                     <div className="min-h-[120px] space-y-2 p-2">
-                      {dayEvents.map((ev) => (
-                        <Link
-                          key={ev.id}
-                          to={`/events/${ev.id}`}
-                          className="block rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] transition hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600 dark:hover:bg-indigo-900/20"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="font-semibold text-slate-900 dark:text-slate-100">
-                                {ev.title}
+                      {dayEvents.map((ev) => {
+                        const firstTag = ev.tags?.[0]?.name;
+                        return (
+                          <Link
+                            key={ev.id}
+                            to={`/events/${ev.id}`}
+                            className="block rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] transition hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600 dark:hover:bg-indigo-900/20"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="overflow-hidden">
+                                <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                                  {firstTag && (
+                                    <span
+                                      title={firstTag}
+                                      className="shrink-0 block h-2 w-2 rounded-full"
+                                      style={{ backgroundColor: getTagColor(firstTag, false) }}
+                                    />
+                                  )}
+                                  <span className="truncate">{ev.title}</span>
+                                </div>
+                                <div className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-400 truncate">
+                                  {formatTime(ev.date)} · {ev.location}
+                                </div>
                               </div>
-                              <div className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-400">
-                                {formatTime(ev.date)} · {ev.location}
+                              <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+                                {ev.role}
                               </div>
                             </div>
-                            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                              {ev.role}
+                            <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-400 flex flex-wrap gap-1">
+                              {ev.participantsCount} participants · {ev.isFull ? 'Full' : 'Open'}
                             </div>
-                          </div>
-                          <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-400">
-                            {ev.participantsCount} participants ·{' '}
-                            {ev.isFull ? 'Full' : 'Open'}
-                          </div>
-                        </Link>
-                      ))}
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -364,21 +407,33 @@ export function MyEventsPage() {
                   </div>
                   {dayEvents.length > 0 ? (
                     <div className="ml-10 space-y-1.5 pb-2">
-                      {dayEvents.map((ev) => (
-                        <Link
-                          key={ev.id}
-                          to={`/events/${ev.id}`}
-                          className="block rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-sm transition hover:border-indigo-300 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">{ev.title}</div>
-                            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">{ev.role}</div>
-                          </div>
-                          <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            {formatTime(ev.date)} · {ev.location} · {ev.participantsCount} participants · {ev.isFull ? 'Full' : 'Open'}
-                          </div>
-                        </Link>
-                      ))}
+                      {dayEvents.map((ev) => {
+                        const firstTag = ev.tags?.[0]?.name;
+                        return (
+                          <Link
+                            key={ev.id}
+                            to={`/events/${ev.id}`}
+                            className="block rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-sm transition hover:border-indigo-300 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-indigo-600"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1 overflow-hidden">
+                                {firstTag && (
+                                  <span
+                                    title={firstTag}
+                                    className="shrink-0 block h-2 w-2 rounded-full"
+                                    style={{ backgroundColor: getTagColor(firstTag, false) }}
+                                  />
+                                )}
+                                <span className="truncate">{ev.title}</span>
+                              </div>
+                              <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">{ev.role}</div>
+                            </div>
+                            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                              {formatTime(ev.date)} · {ev.location} · {ev.participantsCount} participants · {ev.isFull ? 'Full' : 'Open'}
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="ml-10 pb-1 text-xs text-slate-400 dark:text-slate-500">—</div>

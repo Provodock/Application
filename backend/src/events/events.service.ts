@@ -11,6 +11,7 @@ import { Event } from './event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { User } from '../users/user.entity';
+import { TagsService } from '../tags/tags.service';
 
 const PAST_EVENTS_CLEANUP_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -19,6 +20,7 @@ export class EventsService implements OnModuleInit {
   constructor(
     @InjectRepository(Event)
     private readonly eventsRepository: Repository<Event>,
+    private readonly tagsService: TagsService,
   ) { }
 
   onModuleInit() {
@@ -37,12 +39,13 @@ export class EventsService implements OnModuleInit {
     return past.length;
   }
 
-  async findAll(currentUserId?: string) {
+  async findAll(currentUserId?: string, tagIds?: string[]) {
     const now = new Date();
     const qb = this.eventsRepository
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.participants', 'participant')
       .leftJoinAndSelect('event.organizer', 'organizer')
+      .leftJoinAndSelect('event.tags', 'tag')
       .where('event.date >= :now', { now });
 
     if (currentUserId) {
@@ -52,6 +55,18 @@ export class EventsService implements OnModuleInit {
       );
     } else {
       qb.andWhere('event.visibility = :pub', { pub: 'public' });
+    }
+
+    if (tagIds && tagIds.length > 0) {
+      qb.andWhere((qb2) => {
+        const subQuery = qb2
+          .subQuery()
+          .select('et.event_id')
+          .from('event_tags', 'et')
+          .where('et.tag_id IN (:...tagIds)')
+          .getQuery();
+        return `event.id IN ${subQuery}`;
+      }).setParameter('tagIds', tagIds);
     }
 
     const events = await qb.orderBy('event.date', 'ASC').getMany();
@@ -68,7 +83,7 @@ export class EventsService implements OnModuleInit {
   async findOne(id: string, currentUserId?: string) {
     const event = await this.eventsRepository.findOne({
       where: { id },
-      relations: ['participants', 'organizer'],
+      relations: ['participants', 'organizer', 'tags'],
     });
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -93,13 +108,22 @@ export class EventsService implements OnModuleInit {
     }
     const capacity = dto.capacity != null && dto.capacity > 0 ? dto.capacity : 999999;
     const visibility = dto.visibility || 'public';
+
+    let tags: import('../tags/tag.entity').Tag[] = [];
+    if (dto.tagIds && dto.tagIds.length > 0) {
+      tags = await this.tagsService.findByIds(dto.tagIds);
+    }
+
     const event = this.eventsRepository.create({
-      ...dto,
+      title: dto.title,
+      description: dto.description,
       date: eventDate,
+      location: dto.location,
       capacity,
       visibility,
       organizer,
       participants: [],
+      tags,
     });
     const saved = await this.eventsRepository.save(event);
     return this.toPublicEvent(saved);
@@ -108,7 +132,7 @@ export class EventsService implements OnModuleInit {
   async update(id: string, dto: UpdateEventDto, userId: string) {
     const event = await this.eventsRepository.findOne({
       where: { id },
-      relations: ['organizer', 'participants'],
+      relations: ['organizer', 'participants', 'tags'],
     });
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -137,6 +161,14 @@ export class EventsService implements OnModuleInit {
     }
     if (dto.visibility !== undefined) event.visibility = dto.visibility;
 
+    if (dto.tagIds !== undefined) {
+      if (dto.tagIds.length > 0) {
+        event.tags = await this.tagsService.findByIds(dto.tagIds);
+      } else {
+        event.tags = [];
+      }
+    }
+
     const saved = await this.eventsRepository.save(event);
     return this.toPublicEvent(saved);
   }
@@ -158,7 +190,7 @@ export class EventsService implements OnModuleInit {
   async join(eventId: string, user: User) {
     const event = await this.eventsRepository.findOne({
       where: { id: eventId },
-      relations: ['participants', 'organizer'],
+      relations: ['participants', 'organizer', 'tags'],
     });
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -179,7 +211,7 @@ export class EventsService implements OnModuleInit {
   async leave(eventId: string, user: User) {
     const event = await this.eventsRepository.findOne({
       where: { id: eventId },
-      relations: ['participants', 'organizer'],
+      relations: ['participants', 'organizer', 'tags'],
     });
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -195,6 +227,7 @@ export class EventsService implements OnModuleInit {
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.organizer', 'organizer')
       .leftJoinAndSelect('event.participants', 'participant')
+      .leftJoinAndSelect('event.tags', 'tag')
       .where('event.date >= :now AND (organizer.id = :userId OR participant.id = :userId)', {
         now,
         userId,
@@ -217,6 +250,7 @@ export class EventsService implements OnModuleInit {
         role,
         participantsCount,
         isFull,
+        tags: (event.tags || []).map((t) => ({ id: t.id, name: t.name, imageUrl: t.imageUrl })),
       };
     });
   }
@@ -237,6 +271,7 @@ export class EventsService implements OnModuleInit {
         : undefined,
       participantsCount,
       isFull,
+      tags: (event.tags || []).map((t) => ({ id: t.id, name: t.name, imageUrl: t.imageUrl })),
     };
   }
 
@@ -250,4 +285,6 @@ export class EventsService implements OnModuleInit {
     };
   }
 }
+
+
 

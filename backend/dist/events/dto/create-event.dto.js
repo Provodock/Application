@@ -37,9 +37,24 @@ __decorate([
     __metadata("design:type", String)
 ], CreateEventDto.prototype, "location", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ required: false, description: 'Leave empty for unlimited' }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], CreateEventDto.prototype, "capacity", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, enum: ['public', 'private'], default: 'public' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['public', 'private']),
+    __metadata("design:type", String)
+], CreateEventDto.prototype, "visibility", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, description: 'Array of tag IDs, max 5', type: [String] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMaxSize)(5),
+    (0, class_validator_1.IsUUID)('4', { each: true }),
+    __metadata("design:type", Array)
+], CreateEventDto.prototype, "tagIds", void 0);
 //# sourceMappingURL=create-event.dto.js.map

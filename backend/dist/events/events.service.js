@@ -17,49 +17,112 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const event_entity_1 = require("./event.entity");
+const tags_service_1 = require("../tags/tags.service");
+const PAST_EVENTS_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
 let EventsService = class EventsService {
-    constructor(eventsRepository) {
+    constructor(eventsRepository, tagsService) {
         this.eventsRepository = eventsRepository;
+        this.tagsService = tagsService;
     }
-    async findAll() {
-        const events = await this.eventsRepository.find({
-            order: { date: 'ASC' },
+    onModuleInit() {
+        this.removePastEvents().catch(() => { });
+        setInterval(() => this.removePastEvents().catch(() => { }), PAST_EVENTS_CLEANUP_INTERVAL_MS);
+    }
+    async removePastEvents() {
+        const now = new Date();
+        const past = await this.eventsRepository.find({
+            where: { date: (0, typeorm_2.LessThan)(now) },
         });
-        return events.map((event) => this.toPublicEvent(event));
+        if (past.length > 0) {
+            await this.eventsRepository.remove(past);
+        }
+        return past.length;
+    }
+    async findAll(currentUserId, tagIds) {
+        const now = new Date();
+        const qb = this.eventsRepository
+            .createQueryBuilder('event')
+            .leftJoinAndSelect('event.participants', 'participant')
+            .leftJoinAndSelect('event.organizer', 'organizer')
+            .leftJoinAndSelect('event.tags', 'tag')
+            .where('event.date >= :now', { now });
+        if (currentUserId) {
+            qb.andWhere('(event.visibility = :pub OR (event.visibility = :priv AND organizer.id = :uid))', { pub: 'public', priv: 'private', uid: currentUserId });
+        }
+        else {
+            qb.andWhere('event.visibility = :pub', { pub: 'public' });
+        }
+        if (tagIds && tagIds.length > 0) {
+            qb.andWhere((qb2) => {
+                const subQuery = qb2
+                    .subQuery()
+                    .select('et.event_id')
+                    .from('event_tags', 'et')
+                    .where('et.tag_id IN (:...tagIds)')
+                    .getQuery();
+                return `event.id IN ${subQuery}`;
+            }).setParameter('tagIds', tagIds);
+        }
+        const events = await qb.orderBy('event.date', 'ASC').getMany();
+        return events.map((event) => {
+            const base = this.toPublicEvent(event);
+            if (currentUserId) {
+                const isJoined = (event.participants || []).some((p) => p.id === currentUserId);
+                return { ...base, isJoined };
+            }
+            return base;
+        });
     }
     async findOne(id, currentUserId) {
         const event = await this.eventsRepository.findOne({
             where: { id },
-            relations: ['participants', 'organizer'],
+            relations: ['participants', 'organizer', 'tags'],
         });
         if (!event) {
             throw new common_1.NotFoundException('Event not found');
         }
         const base = this.toPublicEvent(event);
+        const participants = (event.participants || []).map((p) => ({
+            id: p.id,
+            email: p.email,
+        }));
+        const result = { ...base, participants };
         if (currentUserId) {
             const isJoined = event.participants.some((p) => p.id === currentUserId);
-            return { ...base, isJoined };
+            return { ...result, isJoined };
         }
-        return base;
+        return result;
     }
     async create(dto, organizer) {
         const eventDate = new Date(dto.date);
         if (eventDate.getTime() <= Date.now()) {
             throw new common_1.BadRequestException('Event date must be in the future');
         }
+        const capacity = dto.capacity != null && dto.capacity > 0 ? dto.capacity : 999999;
+        const visibility = dto.visibility || 'public';
+        let tags = [];
+        if (dto.tagIds && dto.tagIds.length > 0) {
+            tags = await this.tagsService.findByIds(dto.tagIds);
+        }
         const event = this.eventsRepository.create({
-            ...dto,
+            title: dto.title,
+            description: dto.description,
             date: eventDate,
+            location: dto.location,
+            capacity,
+            visibility,
             organizer,
             participants: [],
+            tags,
         });
         const saved = await this.eventsRepository.save(event);
         return this.toPublicEvent(saved);
     }
     async update(id, dto, userId) {
+        var _a;
         const event = await this.eventsRepository.findOne({
             where: { id },
-            relations: ['organizer', 'participants'],
+            relations: ['organizer', 'participants', 'tags'],
         });
         if (!event) {
             throw new common_1.NotFoundException('Event not found');
@@ -80,8 +143,23 @@ let EventsService = class EventsService {
             event.description = dto.description;
         if (dto.location !== undefined)
             event.location = dto.location;
-        if (dto.capacity !== undefined)
+        if (dto.capacity !== undefined) {
+            const currentParticipants = ((_a = event.participants) === null || _a === void 0 ? void 0 : _a.length) || 0;
+            if (dto.capacity < currentParticipants) {
+                throw new common_1.BadRequestException(`Cannot set capacity to ${dto.capacity}: there are already ${currentParticipants} participants`);
+            }
             event.capacity = dto.capacity;
+        }
+        if (dto.visibility !== undefined)
+            event.visibility = dto.visibility;
+        if (dto.tagIds !== undefined) {
+            if (dto.tagIds.length > 0) {
+                event.tags = await this.tagsService.findByIds(dto.tagIds);
+            }
+            else {
+                event.tags = [];
+            }
+        }
         const saved = await this.eventsRepository.save(event);
         return this.toPublicEvent(saved);
     }
@@ -101,7 +179,7 @@ let EventsService = class EventsService {
     async join(eventId, user) {
         const event = await this.eventsRepository.findOne({
             where: { id: eventId },
-            relations: ['participants', 'organizer'],
+            relations: ['participants', 'organizer', 'tags'],
         });
         if (!event) {
             throw new common_1.NotFoundException('Event not found');
@@ -121,7 +199,7 @@ let EventsService = class EventsService {
     async leave(eventId, user) {
         const event = await this.eventsRepository.findOne({
             where: { id: eventId },
-            relations: ['participants', 'organizer'],
+            relations: ['participants', 'organizer', 'tags'],
         });
         if (!event) {
             throw new common_1.NotFoundException('Event not found');
@@ -131,12 +209,16 @@ let EventsService = class EventsService {
         return this.buildParticipationResponse(saved);
     }
     async findForUser(userId) {
+        const now = new Date();
         const events = await this.eventsRepository
             .createQueryBuilder('event')
             .leftJoinAndSelect('event.organizer', 'organizer')
             .leftJoinAndSelect('event.participants', 'participant')
-            .where('organizer.id = :userId', { userId })
-            .orWhere('participant.id = :userId', { userId })
+            .leftJoinAndSelect('event.tags', 'tag')
+            .where('event.date >= :now AND (organizer.id = :userId OR participant.id = :userId)', {
+            now,
+            userId,
+        })
             .orderBy('event.date', 'ASC')
             .getMany();
         return events.map((event) => {
@@ -154,6 +236,7 @@ let EventsService = class EventsService {
                 role,
                 participantsCount,
                 isFull,
+                tags: (event.tags || []).map((t) => ({ id: t.id, name: t.name })),
             };
         });
     }
@@ -168,11 +251,13 @@ let EventsService = class EventsService {
             date: event.date,
             location: event.location,
             capacity: event.capacity,
+            visibility: event.visibility || 'public',
             organizer: event.organizer
                 ? { id: event.organizer.id, email: event.organizer.email }
                 : undefined,
             participantsCount,
             isFull,
+            tags: (event.tags || []).map((t) => ({ id: t.id, name: t.name })),
         };
     }
     buildParticipationResponse(event) {
@@ -190,6 +275,7 @@ exports.EventsService = EventsService;
 exports.EventsService = EventsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(event_entity_1.Event)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        tags_service_1.TagsService])
 ], EventsService);
 //# sourceMappingURL=events.service.js.map

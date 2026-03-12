@@ -10,6 +10,7 @@ export type PublicEvent = {
   participantsCount: number;
   isFull: boolean;
   isJoined?: boolean;
+  tags?: { id: string; name: string; imageUrl?: string }[];
 };
 
 export type EventDetails = PublicEvent & {
@@ -25,5 +26,6 @@ export type MyEvent = {
   role: 'organizer' | 'participant';
   participantsCount: number;
   isFull: boolean;
+  tags?: { id: string; name: string; imageUrl?: string }[];
 };
 

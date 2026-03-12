@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { User } from './users/user.entity';
 import { Event } from './events/event.entity';
+import { Tag } from './tags/tag.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -10,8 +11,9 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'event_manager',
-  entities: [User, Event],
+  entities: [User, Event, Tag],
   synchronize: true,
   logging: false,
 });
+
 

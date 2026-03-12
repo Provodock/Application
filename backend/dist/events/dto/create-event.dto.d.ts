@@ -3,5 +3,7 @@ export declare class CreateEventDto {
     description?: string;
     date: string;
     location: string;
-    capacity: number;
+    capacity?: number;
+    visibility?: 'public' | 'private';
+    tagIds?: string[];
 }
