@@ -23,8 +23,14 @@ export class ChatService {
     // 2. Format the context
     const eventsContext = upcomingEvents.map(e => {
       const d = new Date(e.date);
-      const formattedDate = `${d.getMonth() + 1}.${d.getDate()}.${d.getFullYear()}`;
-      return `- "${e.title}" on ${formattedDate} at ${e.location}. Tags: ${e.tags.map(t => t.name).join(', ')}. Capacity: ${e.participantsCount}/${e.capacity}. Status: ${e.isFull ? 'Full' : 'Open'}.`;
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const formattedDate = `${day}.${month}.${year} ${hours}:${minutes}`;
+      const capacityDisplay = e.capacity >= 999999 ? 'infinity' : e.capacity;
+      return `- "${e.title}" on ${formattedDate} at ${e.location}. Tags: ${e.tags.map(t => t.name).join(', ')}. Capacity: ${e.participantsCount}/${capacityDisplay}. Status: ${e.isFull ? 'Full' : 'Open'}.`;
     }).join('\n');
 
     let userContext = `You are talking to an unregistered guest. They cannot register for events until they log in or create an account.`;
@@ -34,7 +40,12 @@ export class ChatService {
       const userEvents = await this.eventsService.findForUser(uId);
       const userEventsContext = userEvents.map(e => {
         const d = new Date(e.date);
-        const formattedDate = `${d.getMonth() + 1}.${d.getDate()}.${d.getFullYear()}`;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const formattedDate = `${day}.${month}.${year} ${hours}:${minutes}`;
         return `- "${e.title}" on ${formattedDate} at ${e.location}. Role: ${e.role}.`;
       }).join('\n');
 
@@ -51,6 +62,9 @@ Remember, you can encourage them to check out new events and join them.`;
 Your goal is to help users find interesting events, answer questions about the schedule, and provide recommendations.
 Always answer in English only, regardless of the language the user asks in.
 Be concise but friendly. Do not hallucinate events that are not in the list below.
+
+IMPORTANT STRICT RULE:
+You are an event assistant ONLY. If the user asks you to write code (like Python scripts), do math, tell jokes unrelated to events, or asks about general knowledge completely unrelated to the Event Manager platform, you MUST politely refuse. Tell them your domain is strictly limited to helping them find and manage events on this platform.
 
 --- USER CONTEXT ---
 ${userContext}

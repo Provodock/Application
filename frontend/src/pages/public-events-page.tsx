@@ -12,7 +12,12 @@ type ViewMode = 'list' | 'calendar';
 
 function formatDate(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleString(getDateLocale(), { dateStyle: 'medium', timeStyle: 'short' });
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
 }
 
 function formatDayKey(iso: string) {
@@ -23,7 +28,10 @@ function formatDayKey(iso: string) {
 }
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString(getDateLocale(), { hour: '2-digit', minute: '2-digit' });
+  const d = new Date(iso);
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
 }
 
 export function PublicEventsPage() {
@@ -308,8 +316,10 @@ export function PublicEventsPage() {
                     {e.tags && e.tags.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {e.tags.map((t) => (
-                          <span key={t.id} className={clsx("flex items-center gap-1 rounded bg-indigo-50 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300", t.imageUrl ? "pl-[3px] pr-1.5" : "px-1.5")}>
-                            {t.imageUrl ? (
+                          <span key={t.id} className={clsx("flex items-center gap-1 rounded bg-indigo-50 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300", t.imageUrl ? "pl-1 pr-1.5" : "px-1.5")}>
+                            {t.imageUrl && !t.imageUrl.startsWith('http') ? (
+                              <span className="text-xs leading-none">{t.imageUrl}</span>
+                            ) : t.imageUrl ? (
                               <img src={t.imageUrl} alt="" className="h-3.5 w-3.5 rounded-sm object-cover shrink-0" />
                             ) : (
                               <span className="font-bold opacity-50">#</span>

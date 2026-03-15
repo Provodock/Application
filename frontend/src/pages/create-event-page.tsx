@@ -17,9 +17,9 @@ export function CreateEventPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [title, setTitle] = useState('New event');
-  const [description, setDescription] = useState('Short description…');
-  const [location, setLocation] = useState('Online');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
@@ -46,14 +46,16 @@ export function CreateEventPage() {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
         <div className="grid gap-4">
-          <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input label="Title" placeholder="New event" value={title} onChange={(e) => setTitle(e.target.value)} />
           <Input
             label="Description"
+            placeholder="Short description…"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
           <Input
             label="Location"
+            placeholder="Online"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />

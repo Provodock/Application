@@ -26,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between">
             <Link
               to="/events"
-              className="text-sm font-extrabold tracking-wide text-slate-900 dark:text-slate-100"
+              className="text-lg font-extrabold tracking-wide text-slate-900 dark:text-slate-100 sm:text-xl"
             >
               Event Manager
             </Link>
