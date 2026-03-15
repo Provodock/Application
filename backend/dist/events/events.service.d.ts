@@ -28,6 +28,7 @@ export declare class EventsService implements OnModuleInit {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     } | {
         isJoined: boolean;
@@ -47,6 +48,7 @@ export declare class EventsService implements OnModuleInit {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     })[]>;
     findOne(id: string, currentUserId?: string): Promise<{
@@ -70,6 +72,7 @@ export declare class EventsService implements OnModuleInit {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     } | {
         isJoined: boolean;
@@ -93,6 +96,7 @@ export declare class EventsService implements OnModuleInit {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     }>;
     create(dto: CreateEventDto, organizer: User): Promise<{
@@ -112,6 +116,7 @@ export declare class EventsService implements OnModuleInit {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     }>;
     update(id: string, dto: UpdateEventDto, userId: string): Promise<{
@@ -131,6 +136,7 @@ export declare class EventsService implements OnModuleInit {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     }>;
     remove(id: string, userId: string): Promise<void>;
@@ -155,6 +161,27 @@ export declare class EventsService implements OnModuleInit {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
+        }[];
+    }[]>;
+    findArchived(tagIds?: string[]): Promise<{
+        id: string;
+        title: string;
+        description: string | undefined;
+        date: Date;
+        location: string;
+        capacity: number;
+        visibility: "public" | "private";
+        organizer: {
+            id: string;
+            email: string;
+        } | undefined;
+        participantsCount: number;
+        isFull: boolean;
+        tags: {
+            id: string;
+            name: string;
+            imageUrl: string | undefined;
         }[];
     }[]>;
     private toPublicEvent;

@@ -13,6 +13,7 @@ export declare class MeController {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     }[]>;
 }

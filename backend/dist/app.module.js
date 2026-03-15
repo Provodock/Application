@@ -15,6 +15,7 @@ const auth_module_1 = require("./auth/auth.module");
 const events_module_1 = require("./events/events.module");
 const me_module_1 = require("./me/me.module");
 const tags_module_1 = require("./tags/tags.module");
+const chat_module_1 = require("./chat/chat.module");
 const user_entity_1 = require("./users/user.entity");
 const event_entity_1 = require("./events/event.entity");
 const tag_entity_1 = require("./tags/tag.entity");
@@ -43,6 +44,7 @@ exports.AppModule = AppModule = __decorate([
             events_module_1.EventsModule,
             me_module_1.MeModule,
             tags_module_1.TagsModule,
+            chat_module_1.ChatModule,
         ],
     })
 ], AppModule);

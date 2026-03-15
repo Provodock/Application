@@ -32,6 +32,10 @@ let EventsController = class EventsController {
         const tagIds = tags ? tags.split(',').filter(Boolean) : undefined;
         return this.eventsService.findAll(userId, tagIds);
     }
+    getArchive(tags) {
+        const tagIds = tags ? tags.split(',').filter(Boolean) : undefined;
+        return this.eventsService.findArchived(tagIds);
+    }
     getOne(id, req) {
         var _a;
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
@@ -75,6 +79,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], EventsController.prototype, "getAll", null);
+__decorate([
+    (0, common_1.Get)('archive'),
+    __param(0, (0, common_1.Query)('tags')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], EventsController.prototype, "getArchive", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, common_1.UseGuards)(optional_jwt_auth_guard_1.OptionalJwtAuthGuard),

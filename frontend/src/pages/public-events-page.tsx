@@ -201,19 +201,21 @@ export function PublicEventsPage() {
             </>
           )}
           <div className="basis-full sm:hidden" />
-          <Button
-            variant={showFilters ? 'primary' : 'secondary'}
-            onClick={() => setShowFilters(!showFilters)}
-            className={clsx("flex items-center gap-1.5", showFilters && "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60")}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-            <span className="hidden sm:inline">Sort & Filters</span>
-            {selectedTags.length > 0 && (
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-indigo-200 text-[10px] font-bold text-indigo-800 dark:bg-indigo-800 dark:text-indigo-100">
-                {selectedTags.length}
-              </span>
-            )}
-          </Button>
+          {viewMode === 'list' && (
+            <Button
+              variant={showFilters ? 'primary' : 'secondary'}
+              onClick={() => setShowFilters(!showFilters)}
+              className={clsx("flex items-center gap-1.5", showFilters && "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60")}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              <span className="hidden sm:inline">Sort & Filters</span>
+              {selectedTags.length > 0 && (
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-indigo-200 text-[10px] font-bold text-indigo-800 dark:bg-indigo-800 dark:text-indigo-100">
+                  {selectedTags.length}
+                </span>
+              )}
+            </Button>
+          )}
           <Button variant="secondary" onClick={load} disabled={busy}>
             <span className="hidden sm:inline">Refresh</span>
             <svg className="sm:hidden" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
@@ -229,7 +231,7 @@ export function PublicEventsPage() {
         </div>
       </div>
 
-      {showFilters && (
+      {showFilters && viewMode === 'list' && (
         <div className="animate-in fade-in slide-in-from-top-2 duration-200 mt-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-8">

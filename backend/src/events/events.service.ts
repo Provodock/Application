@@ -30,8 +30,9 @@ export class EventsService implements OnModuleInit {
 
   async removePastEvents(): Promise<number> {
     const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const past = await this.eventsRepository.find({
-      where: { date: LessThan(now) as any },
+      where: { date: LessThan(sevenDaysAgo) as any },
     });
     if (past.length > 0) {
       await this.eventsRepository.remove(past);
@@ -253,6 +254,34 @@ export class EventsService implements OnModuleInit {
         tags: (event.tags || []).map((t) => ({ id: t.id, name: t.name, imageUrl: t.imageUrl })),
       };
     });
+  }
+
+  async findArchived(tagIds?: string[]) {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const qb = this.eventsRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.participants', 'participant')
+      .leftJoinAndSelect('event.organizer', 'organizer')
+      .leftJoinAndSelect('event.tags', 'tag')
+      .where('event.date < :now AND event.date >= :sevenDaysAgo', { now, sevenDaysAgo })
+      .andWhere('event.visibility = :pub', { pub: 'public' });
+
+    if (tagIds && tagIds.length > 0) {
+      qb.andWhere((qb2) => {
+        const subQuery = qb2
+          .subQuery()
+          .select('et.event_id')
+          .from('event_tags', 'et')
+          .where('et.tag_id IN (:...tagIds)')
+          .getQuery();
+        return `event.id IN ${subQuery}`;
+      }).setParameter('tagIds', tagIds);
+    }
+
+    const events = await qb.orderBy('event.date', 'DESC').getMany();
+    return events.map((event) => this.toPublicEvent(event));
   }
 
   private toPublicEvent(event: Event) {

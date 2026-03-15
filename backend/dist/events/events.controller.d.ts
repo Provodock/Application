@@ -23,6 +23,7 @@ export declare class EventsController {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     } | {
         isJoined: boolean;
@@ -42,8 +43,29 @@ export declare class EventsController {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     })[]>;
+    getArchive(tags?: string): Promise<{
+        id: string;
+        title: string;
+        description: string | undefined;
+        date: Date;
+        location: string;
+        capacity: number;
+        visibility: "public" | "private";
+        organizer: {
+            id: string;
+            email: string;
+        } | undefined;
+        participantsCount: number;
+        isFull: boolean;
+        tags: {
+            id: string;
+            name: string;
+            imageUrl: string | undefined;
+        }[];
+    }[]>;
     getOne(id: string, req: any): Promise<{
         participants: {
             id: string;
@@ -65,6 +87,7 @@ export declare class EventsController {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     } | {
         isJoined: boolean;
@@ -88,6 +111,7 @@ export declare class EventsController {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     }>;
     create(dto: CreateEventDto, req: any): Promise<{
@@ -107,6 +131,7 @@ export declare class EventsController {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     }>;
     update(id: string, dto: UpdateEventDto, req: any): Promise<{
@@ -126,6 +151,7 @@ export declare class EventsController {
         tags: {
             id: string;
             name: string;
+            imageUrl: string | undefined;
         }[];
     }>;
     remove(id: string, req: any): Promise<void>;

@@ -35,6 +35,12 @@ export class EventsController {
     return this.eventsService.findAll(userId, tagIds);
   }
 
+  @Get('archive')
+  getArchive(@Query('tags') tags?: string) {
+    const tagIds = tags ? tags.split(',').filter(Boolean) : undefined;
+    return this.eventsService.findArchived(tagIds);
+  }
+
   @Get(':id')
   @UseGuards(OptionalJwtAuthGuard)
   getOne(@Param('id') id: string, @Req() req: any) {

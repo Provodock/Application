@@ -5,6 +5,7 @@ import { EventDetailsPage } from './pages/event-details-page';
 import { CreateEventPage } from './pages/create-event-page';
 import { EditEventPage } from './pages/edit-event-page';
 import { MyEventsPage } from './pages/my-events-page';
+import { ArchiveEventsPage } from './pages/archive-events-page';
 import { AppShell } from './components/app-shell';
 import { useAuthStore } from './stores/auth-store';
 
@@ -22,6 +23,7 @@ export function App() {
           <Route path="/" element={<Navigate to="/events" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/events" element={<PublicEventsPage />} />
+          <Route path="/events/archive" element={<ArchiveEventsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
           <Route
             path="/events/:id/edit"

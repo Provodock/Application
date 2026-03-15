@@ -6,6 +6,8 @@ import { AuthModule } from './auth/auth.module';
 import { EventsModule } from './events/events.module';
 import { MeModule } from './me/me.module';
 import { TagsModule } from './tags/tags.module';
+import { ChatModule } from './chat/chat.module';
+
 import { User } from './users/user.entity';
 import { Event } from './events/event.entity';
 import { Tag } from './tags/tag.entity';
@@ -31,6 +33,7 @@ import { Tag } from './tags/tag.entity';
     EventsModule,
     MeModule,
     TagsModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

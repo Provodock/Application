@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { useAuthStore } from '../stores/auth-store';
 import { useThemeStore } from '../stores/theme-store';
 import { useEffect } from 'react';
+import { AiAssistantWidget } from './ui/ai-assistant-widget';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -52,6 +53,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }
               >
                 Public events
+              </NavLink>
+              <NavLink
+                to="/events/archive"
+                className={({ isActive }) =>
+                  `flex items-center gap-1.5 rounded-full px-3 py-1 text-sm text-center ${isActive
+                    ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                    : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  }`
+                }
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect width="20" height="5" x="2" y="4" rx="2"/><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></svg>
+                <span className="hidden sm:inline">Archive</span>
               </NavLink>
               {token ? (
                 <>
@@ -104,6 +117,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+
+      {/* AI Assistant Widget - Global */}
+      <AiAssistantWidget />
     </div>
   );
 }
