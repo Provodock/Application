@@ -18,7 +18,7 @@ cd Application
 
 ## 2. Configure Environment (Optional)
 
-The project includes a `.env` file with default credentials. You can edit it if needed:
+The project includes a `.env` file with default credentials. You can edit it if needed and add your GROQ_API_KEY:
 
 ```env
 DB_HOST=db
@@ -28,6 +28,8 @@ DB_PASSWORD=postgres
 DB_NAME=event_manager
 JWT_SECRET=dev_secret_key
 VITE_API_BASE_URL=http://localhost:3000/api
+
+GROQ_API_KEY=your_placeholder_or_remove_this_line
 ```
 
 > The defaults work out of the box — no changes are required for local development.
